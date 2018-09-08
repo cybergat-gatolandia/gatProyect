@@ -21,7 +21,7 @@ class UserController extends Controller
             // EN ESTE LUGAR PAGINAMOS CUANTA INFORMACION QUEREMOS EN NUESTRA VISTA
 
             $users = User::join('rols','users.idrol','=','rols.id')
-            //->select('users.id','users.idRol','users.idPersona','users.password','users.condicion') 
+            ->join('personas','users.idpersona','personas.id') 
             ->select('users.id','users.idRol','rols.nombre','users.condicion') 
             ->orderBy('users.id', 'desc')->paginate(3);
         }
@@ -54,11 +54,10 @@ class UserController extends Controller
         //
         
         $user = new Users();
-        $user -> idRol = $request->idRol;
-        $user -> idPersona = $request->idPersona;
+        $user -> idrol = $request->idrol;
+        $user -> idpersona = $request->idpersona;
         $user -> password = $request->password;
-        $user -> condicion = $request->condicion;
-        $user -> estado= '1';
+        $user -> usuario = $request->usuario;
         $user -> save();
     }
     public function update(Request $request)
@@ -66,11 +65,11 @@ class UserController extends Controller
         if (!$request->ajax()) return redirect('/');
         //
         $user =  User::findOrFail($request->id);
-        $user -> idRol = $request->idRol;
-        $user -> idPersona = $request->idPersona;
+        $user -> idrol = $request->idrol;
+        $user -> idpersona = $request->idpersona;
         $user -> password = $request->password;
+        $user -> usuario = $request->usuario;
         $user -> condicion = $request->condicion;
-        $user -> estado= '1';
         $user -> save();
     }
 

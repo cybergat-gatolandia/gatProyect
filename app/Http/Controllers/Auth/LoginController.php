@@ -17,7 +17,7 @@ class LoginController extends Controller
             'password' => 'required|string'
         ]);
 
-        if (Auth::attempt(['usuario'=>$request->usuario,'password'=>$request->password,'condicion'=>1])){
+        if (Auth::attempt(['usuario'=>$request->usuario,'password'=>bcrypt($request->password),'condicion'=>1])){
             return redirect()->router('main');
 
         }
