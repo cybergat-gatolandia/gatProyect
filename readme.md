@@ -1,51 +1,105 @@
-<p align="center"><img src="https://laravel.com/assets/img/components/logo-laravel.svg"></p>
+AdminLTE-Laravel 5.5
+============
 
-<p align="center">
-<a href="https://travis-ci.org/laravel/framework"><img src="https://travis-ci.org/laravel/framework.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://poser.pugx.org/laravel/framework/d/total.svg" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://poser.pugx.org/laravel/framework/v/stable.svg" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://poser.pugx.org/laravel/framework/license.svg" alt="License"></a>
-</p>
+**AdminLTE-Laravel** -- La integración del framework Laravel en su versión 5.5 y la plantilla adminLTE 2.4.2 para iniciar un desarrollo rápido sin necesidad de realizar configuración a gran escala.  
 
-## About Laravel
+**Laravel 5.5** -- Versión actual incluida en este paquete
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel attempts to take the pain out of development by easing common tasks used in the majority of web projects, such as:
+**AdminLTE 2.4.2** -- Versión actual incluida en este paquete
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
 
-Laravel is accessible, yet powerful, providing tools needed for large, robust applications. A superb combination of simplicity, elegance, and innovation give you tools you need to build any application with which you are tasked.
+ 
 
-## Learning Laravel
+### Componentes listos
+**Incluye todos los componentes de la plantilla original listos para ser usados independientemente de la plantilla plantilla base inicial, solo necesita agregar las etiquetas que desea usar**
 
-Laravel has the most extensive and thorough documentation and video tutorial library of any modern web application framework. The [Laravel documentation](https://laravel.com/docs) is thorough, complete, and makes it a breeze to get started learning the framework.
+### Agregar Componentes de la plantilla AdminLTE
+Para incluir los demás componentes de la plantilla AdminLTE recuerde agregar tanto CSS como JS en el `head.blade.php` y `script.blade.php`, utiliza la misma estructura que la plantilla original [AdminLTE.IO](https://adminlte.io):
 
-If you're not in the mood to read, [Laracasts](https://laracasts.com) contains over 900 video tutorials on a range of topics including Laravel, modern PHP, unit testing, JavaScript, and more. Boost the skill level of yourself and your entire team by digging into our comprehensive video library.
+        <link rel="stylesheet" href="{{ asset('bower_components/Ionicons/css/ionicons.min.css')}}">
 
-## Laravel Sponsors
+### Sin registro de usuarios nuevos
+El desarrollo está pensado en ser una plataforma para administradores por lo cual no cuenta con el registro de usuarios, aunque usted puede activar las rutas ya que los controladores de registro no se han eliminado
 
-We would like to extend our thanks to the following sponsors for helping fund on-going Laravel development. If you are interested in becoming a sponsor, please visit the Laravel [Patreon page](http://patreon.com/taylorotwell):
+### Instalación
+Ejecute los comandos con una base de datos configurada en el archivo .env:
 
-- **[Vehikl](http://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[British Software Development](https://www.britishsoftware.co)**
-- **[Styde](https://styde.net)**
-- [Fragrantica](https://www.fragrantica.com)
-- [SOFTonSOFA](https://softonsofa.com/)
+    >   composer update
+        php artisan migrate --seed  
+        
+### Roles y avatar incluido
+La tabla `users` ya incluye la relación con 3 roles los cuales puede utilizar según su necesidad, al igual que incluye los campos para guardar los datos de sesión de Facebook, por ejemplo el avatar.      
 
-## Contributing
+### Plugins incluidos
+En el archivo `composer.json` encontramos:
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](http://laravel.com/docs/contributions).
+    >   "laravel/socialite": "^3.0",
+        "laravelcollective/html": "^5.4.0",
+        "maatwebsite/excel": "~2.1.0",
+        "nesbot/carbon": "^1.22",
+        "barryvdh/laravel-dompdf": "^0.8.0"
 
-## Security Vulnerabilities
+### Configurar Socialite
+En el archivo `services.php` ubicado en `\config` configúrelo con sus datos:
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell at taylor@laravel.com. All security vulnerabilities will be promptly addressed.
+        'facebook' => [
+        'client_id' => 'your-github-app-id',
+        'client_secret' => 'your-github-app-secret',
+        'redirect' => 'http://your-callback-url',
+        
+El controlador de autenticación de Socialite ya se encuentra configurado en el archivo `LoginController.php` ubicado en `\app\Http\Controllers\Auth`:
 
-## License
+      public function __construct()
+      {
+        $this->middleware('guest')->except('logout');
+      }
+      
+      public function handleProviderCallback($provider)
+      {
+        try
+        {
+            $user = Socialite::driver($provider)->user();
+        }
+        catch(\Exception $e)
+        {
+            session()->flash('message', 'Cuenta no existe');
+            return redirect('login');
+        }
+         $socialuser = User::where('email',$user->getEmail())->first();
 
-The Laravel framework is open-sourced software licensed under the [MIT license](http://opensource.org/licenses/MIT).
+         if($socialuser == NULL){
+           session()->flash('message', 'Cuenta no existe');
+           return redirect('login');
+         }else{
+           User::where('email',$user->getEmail())
+                     ->update([
+                       'social_name' => $user->getName(),
+                       'email' => $user->getEmail(),
+                       'social_id' => $user->getId(),
+                       'avatar' => $user->getAvatar(),
+                     ]);
+
+           auth()->login($socialuser);
+           return redirect()->To('home');
+         }
+        }
+
+### Carbon como Provider
+Se configuro nesbot/carbon para que esté disponible en todas las vistas, un ejemplo de uso:  
+
+        {{$carbon->format('Y-m-d')}}
+        //otro ejemplo
+        {{$user->created_at->diffForHumans()}}
+        
+### Menú
+Ejemplo de utilización del menú  
+
+        <li <?php echo current_page('home') ? "class='active'" : "";?>>
+          <a href="{{ url('home')}}"><i class="fa fa-link">
+        </i> <span>Home</span></a></li>
+         
+
+
+
+
+

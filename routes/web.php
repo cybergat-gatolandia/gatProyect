@@ -11,17 +11,10 @@
 |
 */
 
+Auth::routes();
 
+Route::resource('/', 'HomeController');
 
-
-Route::get('/', function () {
-  return view('contenido/contenido');
-});
-
-Route::get('/rol','RolController@index');
-Route::post('/rol/registrar', 'RolController@store');
-Route::put('/rol/actualizar', 'RolController@update');
-Route::put('/rol/desactivar', 'RolController@desactivar');
-Route::put('/rol/activar', 'RolController@activar');
-
-
+//Nuevos Controladores con URL transport
+Route::post('transport/transport-user/search', 'ControllerTransPorUser@search')->name('transport-user.search');
+Route::resource('transport/transport-user', 'ControllerTransPorUser');
